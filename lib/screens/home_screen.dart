@@ -1,59 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
+import 'profile_screen.dart';
+import 'settings_screen.dart';
+import '../widgets/app_drawer.dart';
 
 class HomeScreen extends StatelessWidget {
-  Future<void> ensureBoards() async {
-    final boards = FirebaseFirestore.instance.collection("boards");
+  final user = FirebaseAuth.instance.currentUser!;
 
-    final defaultBoards = [
-      {"id": "general", "name": "General", "icon": "📰"},
-      {"id": "announcements", "name": "Announcements", "icon": "📢"},
-      {"id": "projects", "name": "Projects", "icon": "🧩"}
-    ];
-
-    for (var b in defaultBoards) {
-      final doc = await boards.doc(b["id"]).get();
-      if (!doc.exists) {
-        await boards.doc(b["id"]).set({
-          "name": b["name"],
-          "icon": b["icon"],
-          "createdAt": FieldValue.serverTimestamp()
-        });
-      }
-    }
-  }
+  final List<Map<String, String>> boards = [
+    {'name': 'Sports', 'icon': '🏀'},
+    {'name': 'Tech', 'icon': '💻'},
+    {'name': 'Movies', 'icon': '🎬'},
+  ];
 
   @override
   Widget build(BuildContext context) {
-    ensureBoards();
-
     return Scaffold(
-      appBar: AppBar(title: Text("Message Boards")),
-      drawer: AppDrawer(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('boards').snapshots(),
-        builder: (context, snap) {
-          if (!snap.hasData) return Center(child: CircularProgressIndicator());
-
-          final docs = snap.data!.docs;
-
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (_, idx) {
-              final d = docs[idx];
-              return ListTile(
-                leading: Text(d['icon'] ?? "💬", style: TextStyle(fontSize: 30)),
-                title: Text(d['name']),
-                onTap: () => Navigator.push(
+      appBar: AppBar(title: Text('Message Boards')),
+      drawer: AppDrawer(), // Your menu
+      body: ListView.builder(
+        itemCount: boards.length,
+        itemBuilder: (context, index) {
+          final board = boards[index];
+          return Card(
+            margin: EdgeInsets.all(8),
+            child: ListTile(
+              leading: Text(board['icon']!, style: TextStyle(fontSize: 30)),
+              title: Text(board['name']!),
+              trailing: Icon(Icons.arrow_forward),
+              onTap: () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) =>
-                          ChatScreen(boardId: d.id, boardName: d['name'])),
-                ),
-              );
-            },
+                    builder: (_) => ChatScreen(boardName: board['name']!),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

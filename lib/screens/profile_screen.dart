@@ -8,54 +8,52 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final first = TextEditingController();
-  final last = TextEditingController();
-  final dob = TextEditingController();
+  final user = FirebaseAuth.instance.currentUser!;
+  final firstController = TextEditingController();
+  final lastController = TextEditingController();
+  final dobController = TextEditingController();
+
+  void _loadUserData() async {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (doc.exists) {
+      final data = doc.data()!;
+      firstController.text = data['firstName'] ?? '';
+      lastController.text = data['lastName'] ?? '';
+      dobController.text = data['dob'] ?? '';
+    }
+  }
+
+  void _saveProfile() async {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'firstName': firstController.text,
+      'lastName': lastController.text,
+      'dob': dobController.text,
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated')));
+  }
 
   @override
   void initState() {
     super.initState();
-    loadProfile();
-  }
-
-  Future<void> loadProfile() async {
-    final user = FirebaseAuth.instance.currentUser!;
-    final doc = await FirebaseFirestore.instance
-        .collection("users")
-        .doc(user.uid)
-        .get();
-
-    final data = doc.data()!;
-    first.text = data["firstName"] ?? "";
-    last.text = data["lastName"] ?? "";
-    dob.text = data["dob"] ?? "";
-  }
-
-  Future<void> save() async {
-    final user = FirebaseAuth.instance.currentUser!;
-    await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-      "firstName": first.text,
-      "lastName": last.text,
-      "dob": dob.text
-    });
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Saved")));
+    _loadUserData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("Profile")),
-        body: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(children: [
-            TextField(controller: first, decoration: InputDecoration(labelText: "First Name")),
-            TextField(controller: last, decoration: InputDecoration(labelText: "Last Name")),
-            TextField(controller: dob, decoration: InputDecoration(labelText: "DOB")),
-            SizedBox(height: 10),
-            ElevatedButton(onPressed: save, child: Text("Save"))
-          ]),
-        ));
+      appBar: AppBar(title: Text('Profile')),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(controller: firstController, decoration: InputDecoration(labelText: 'First Name')),
+            TextField(controller: lastController, decoration: InputDecoration(labelText: 'Last Name')),
+            TextField(controller: dobController, decoration: InputDecoration(labelText: 'Date of Birth')),
+            SizedBox(height: 20),
+            ElevatedButton(onPressed: _saveProfile, child: Text('Save')),
+          ],
+        ),
+      ),
+    );
   }
 }

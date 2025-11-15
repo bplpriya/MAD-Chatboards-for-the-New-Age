@@ -1,52 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import 'login_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
-  @override
-  _SettingsScreenState createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  final newPass = TextEditingController();
-  final currentPass = TextEditingController();
-
-  Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
-        (route) => false);
-  }
-
-  Future<void> changePassword() async {
-    final user = FirebaseAuth.instance.currentUser!;
-    final cred = EmailAuthProvider.credential(
-        email: user.email!, password: currentPass.text);
-
-    await user.reauthenticateWithCredential(cred);
-    await user.updatePassword(newPass.text);
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Password Updated")));
-  }
-
+class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
-        appBar: AppBar(title: Text("Settings")),
-        body: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(children: [
-            TextField(controller: newPass, decoration: InputDecoration(labelText: "New Password")),
-            TextField(controller: currentPass, decoration: InputDecoration(labelText: "Current Password"), obscureText: true),
-            ElevatedButton(onPressed: changePassword, child: Text("Change Password")),
-            SizedBox(height: 20),
-            ElevatedButton(
-                onPressed: logout,
-                child: Text("Logout"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red))
-          ]),
-        ));
+      appBar: AppBar(title: Text('Settings')),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            SwitchListTile(
+              title: Text('Dark Mode'),
+              value: userProvider.isDarkMode,
+              onChanged: (val) => userProvider.toggleDarkMode(),
+            ),
+            ListTile(
+              title: Text('Notifications'),
+              trailing: Icon(Icons.notifications),
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Notifications clicked'))),
+            ),
+            ListTile(
+              title: Text('Privacy'),
+              trailing: Icon(Icons.privacy_tip),
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Privacy clicked'))),
+            ),
+            ListTile(
+              title: Text('Logout'),
+              trailing: Icon(Icons.logout),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

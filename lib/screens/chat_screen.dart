@@ -1,80 +1,117 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String boardId;
   final String boardName;
-
-  ChatScreen({required this.boardId, required this.boardName});
+  ChatScreen({required this.boardName});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final msg = TextEditingController();
-  final scroll = ScrollController();
+  final messageController = TextEditingController();
+  final user = FirebaseAuth.instance.currentUser!;
 
-  void send() async {
-    if (msg.text.trim().isEmpty) return;
+  void sendMessage() {
+    if (messageController.text.trim().isEmpty) return;
 
-    final user = FirebaseAuth.instance.currentUser!;
-    await FirebaseFirestore.instance
-        .collection("boards")
-        .doc(widget.boardId)
-        .collection("messages")
+    FirebaseFirestore.instance
+        .collection('boards')
+        .doc(widget.boardName)
+        .collection('messages')
         .add({
-      "text": msg.text.trim(),
-      "senderId": user.uid,
-      "senderName": user.email,
-      "timestamp": FieldValue.serverTimestamp()
+      'message': messageController.text,
+      'sender': user.uid,
+      'senderEmail': user.email,
+      'timestamp': FieldValue.serverTimestamp(),
     });
 
-    msg.clear();
+    messageController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    final messagesRef = FirebaseFirestore.instance
-        .collection("boards")
-        .doc(widget.boardId)
-        .collection("messages")
-        .orderBy("timestamp", descending: true);
-
     return Scaffold(
       appBar: AppBar(title: Text(widget.boardName)),
-      body: Column(children: [
-        Expanded(
+      body: Column(
+        children: [
+          Expanded(
             child: StreamBuilder<QuerySnapshot>(
-          stream: messagesRef.snapshots(),
-          builder: (context, snap) {
-            if (!snap.hasData) return Center(child: CircularProgressIndicator());
+              stream: FirebaseFirestore.instance
+                  .collection('boards')
+                  .doc(widget.boardName)
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData)
+                  return Center(child: CircularProgressIndicator());
 
-            final docs = snap.data!.docs;
+                final docs = snapshot.data!.docs;
 
-            return ListView.builder(
-              reverse: true,
-              controller: scroll,
-              itemCount: docs.length,
-              itemBuilder: (_, idx) {
-                final d = docs[idx];
-                return ListTile(
-                  title: Text(d["senderName"]),
-                  subtitle: Text(d["text"]),
+                return ListView.builder(
+                  reverse: true,
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    final isMe = data['sender'] == user.uid;
+
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      alignment:
+                          isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isMe ? Colors.blue : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data['senderEmail'] ?? '',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[700]),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              data['message'] ?? '',
+                              style: TextStyle(
+                                  color: isMe ? Colors.white : Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
-        )),
-        Padding(
-          padding: EdgeInsets.all(8),
-          child: Row(children: [
-            Expanded(child: TextField(controller: msg)),
-            IconButton(icon: Icon(Icons.send), onPressed: send)
-          ]),
-        )
-      ]),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: messageController,
+                    decoration: InputDecoration(
+                        hintText: 'Type a message',
+                        border: OutlineInputBorder()),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: sendMessage,
+                )
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }

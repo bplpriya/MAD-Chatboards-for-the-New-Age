@@ -1,39 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'signup_screen.dart';
-import 'home_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'home_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class SignupScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _SignupScreenState createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final firstController = TextEditingController();
+  final lastController = TextEditingController();
   bool loading = false;
 
-  void login() async {
+  void signup() async {
     setState(() => loading = true);
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      // Ensure user doc exists
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(credential.user!.uid);
-      final docSnapshot = await userDoc.get();
-      if (!docSnapshot.exists) {
-        await userDoc.set({
-          'firstName': '',
-          'lastName': '',
-          'dob': '',
-          'email': credential.user!.email,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+        'firstName': firstController.text.trim(),
+        'lastName': lastController.text.trim(),
+        'dob': '',
+        'email': credential.user!.email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
     } on FirebaseAuthException catch (e) {
@@ -46,21 +42,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(title: Text('Sign Up')),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
+            TextField(controller: firstController, decoration: InputDecoration(labelText: 'First Name')),
+            TextField(controller: lastController, decoration: InputDecoration(labelText: 'Last Name')),
             TextField(controller: emailController, decoration: InputDecoration(labelText: 'Email')),
             TextField(controller: passwordController, decoration: InputDecoration(labelText: 'Password'), obscureText: true),
             SizedBox(height: 20),
             loading
                 ? CircularProgressIndicator()
-                : ElevatedButton(onPressed: login, child: Text('Login')),
-            TextButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SignupScreen())),
-              child: Text("Don't have an account? Sign up"),
-            ),
+                : ElevatedButton(onPressed: signup, child: Text('Sign Up')),
           ],
         ),
       ),
