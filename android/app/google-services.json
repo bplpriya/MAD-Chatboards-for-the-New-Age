@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "754321600370",
+    "project_id": "cloud-messaging-726d0",
+    "storage_bucket": "cloud-messaging-726d0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754321600370:android:4f37e431add3a0ce79b7eb",
+        "android_client_info": {
+          "package_name": "com.example.cloud_messaging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABqrRy1InX_Y5ZlkCceqGKKpjyjpdPEBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754321600370:android:becb401271cee45379b7eb",
+        "android_client_info": {
+          "package_name": "com.example.mad_cloud_messaging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABqrRy1InX_Y5ZlkCceqGKKpjyjpdPEBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754321600370:android:b96796a826af1c2579b7eb",
+        "android_client_info": {
+          "package_name": "com.example.mad_hw2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABqrRy1InX_Y5ZlkCceqGKKpjyjpdPEBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
